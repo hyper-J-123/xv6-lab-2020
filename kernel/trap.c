@@ -16,6 +16,23 @@ void kernelvec();
 
 extern int devintr();
 
+// 设置进程中时钟的相关属性
+int kama_sigalarm(int ticks, void(*handler)()) {
+  struct proc* p = myproc();
+  p->kama_alarm_interval = ticks;
+  p->kama_alarm_handler = handler;
+  p->kama_alarm_ticks = ticks;
+  return 0;
+}
+
+//将进程恢复到alarm中断前的状态
+int kama_sigreturn() {
+  struct proc* p = myproc();
+  *p->trapframe = *p->kama_alarm_trapframe;
+  p->kama_alarm_goingoff = 0;
+  return 0;
+}
+
 void
 trapinit(void)
 {
@@ -77,9 +94,17 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2)
+  if(which_dev == 2){
+    if (p->kama_alarm_interval != 0 && --p->kama_alarm_ticks <= 0 && p->kama_alarm_goingoff == 0) {
+      //保存当前进程的trapframe到kama_alarm_trapframe中
+      *p->kama_alarm_trapframe = *p->trapframe;
+      //设置trapframe，让进程从kama_alarm_handler开始执行
+      p->trapframe->epc = (uint64)(p->kama_alarm_handler);
+      p->kama_alarm_ticks = p->kama_alarm_interval;
+      p->kama_alarm_goingoff = 1;
+  }
     yield();
-
+  }
   usertrapret();
 }
 

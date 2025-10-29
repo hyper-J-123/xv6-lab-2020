@@ -80,6 +80,7 @@ int             pipewrite(struct pipe*, uint64, int);
 void            printf(char*, ...);
 void            panic(char*) __attribute__((noreturn));
 void            printfinit(void);
+void            kama_backtrace(void);
 
 // proc.c
 int             cpuid(void);
@@ -138,6 +139,9 @@ int             argaddr(int, uint64 *);
 int             fetchstr(uint64, char*, int);
 int             fetchaddr(uint64, uint64*);
 void            syscall();
+uint64          sys_sigalarm(void);
+uint64          sys_sigreturn(void);
+
 
 // trap.c
 extern uint     ticks;
@@ -145,6 +149,9 @@ void            trapinit(void);
 void            trapinithart(void);
 extern struct spinlock tickslock;
 void            usertrapret(void);
+int             kama_sigalarm(int, void(*)());
+int             kama_sigreturn(void);
+
 
 // uart.c
 void            uartinit(void);
